@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milisecond → Time Converter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --panel: #f4f7fb;
+    --border: #c8d6e8;
+    --accent: #1a3a6b;
+    --accent-bright: #1e4d8c;
+    --accent2: #c0392b;
+    --text: #0d1b2e;
+    --muted: #4a6080;
+    --glow: 0 0 20px rgba(26,58,107,0.15);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow-x: hidden;
+  }
+
+  /* Subtle dot background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(26,58,107,0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  h1 {
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    background: linear-gradient(135deg, #0d1b2e, #1e4d8c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .byline {
+    margin-top: 0.3rem;
+    color: var(--accent);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    font-weight: 700;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    animation: fadeUp 0.6s 0.15s ease both;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+    margin-bottom: 2rem;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    color: var(--text);
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  button.convert-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+
+  button.convert-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(26,58,107,0.35);
+    background: var(--accent-bright);
+  }
+
+  button.convert-btn:active { transform: translateY(0); }
+
+  /* Result display */
+  .result-area {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+  }
+
+  .result-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .time-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-size: clamp(2.5rem, 10vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    min-height: 5rem;
+    position: relative;
+  }
+
+  .time-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .time-number {
+    color: var(--accent);
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 8px rgba(26,58,107,0.15);
+  }
+
+  .time-unit {
+    font-size: 0.5rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-weight: 400;
+    margin-top: -0.2em;
+  }
+
+  .time-sep {
+    color: var(--border);
+    margin: 0 0.1em;
+    align-self: flex-start;
+    padding-top: 0.1em;
+  }
+
+  .placeholder-text {
+    color: var(--muted);
+    font-size: 1rem;
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-weight: 400;
+  }
+
+  /* Breakdown row */
+  .breakdown {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .breakdown-item {
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .breakdown-item.active { border-color: rgba(26,58,107,0.4); }
+
+  .breakdown-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+
+  .breakdown-lbl {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.25rem;
+    display: block;
+  }
+
+  .error-msg {
+    color: var(--accent2);
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    min-height: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Copy button */
+  .copy-row {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  button.copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--muted);
+    font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    display: none;
+  }
+
+  button.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  button.copy-btn.visible { display: block; }
+  button.copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .pop { animation: pop 0.25s ease; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>MS → TIME</h1>
+    <p class="subtitle">Milliseconds Converter</p>
+    <p class="byline">BY DARASITH</p>
+  </header>
+
+  <div class="card">
+    <div class="input-group">
+      <input type="text" id="msInput" placeholder="Enter milliseconds…" inputmode="numeric" autocomplete="off" />
+      <button class="convert-btn" onclick="convert()">CONVERT</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="result-area">
+      <div class="result-label">Result</div>
+
+      <div class="time-display" id="timeDisplay">
+        <span class="placeholder-text">——— : —— : ——</span>
+      </div>
+
+      <div class="breakdown" id="breakdown">
+        <div class="breakdown-item" id="b-hr">
+          <span class="breakdown-val" id="v-hr">—</span>
+          <span class="breakdown-lbl">Hours</span>
+        </div>
+        <div class="breakdown-item" id="b-min">
+          <span class="breakdown-val" id="v-min">—</span>
+          <span class="breakdown-lbl">Minutes</span>
+        </div>
+        <div class="breakdown-item" id="b-sec">
+          <span class="breakdown-val" id="v-sec">—</span>
+          <span class="breakdown-lbl">Seconds</span>
+        </div>
+        <div class="breakdown-item" id="b-ms">
+          <span class="breakdown-val" id="v-ms">—</span>
+          <span class="breakdown-lbl">Ms Left</span>
+        </div>
+      </div>
+
+      <div class="copy-row">
+        <button class="copy-btn" id="copyBtn" onclick="copyResult()">COPY RESULT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const input = document.getElementById('msInput');
+  const errorMsg = document.getElementById('errorMsg');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const copyBtn = document.getElementById('copyBtn');
+
+  let lastResult = '';
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') convert();
+  });
+
+  input.addEventListener('input', () => {
+    errorMsg.textContent = '';
+  });
+
+  function pad(n, len = 2) {
+    return String(n).padStart(len, '0');
+  }
+
+  function convert() {
+    const raw = input.value.trim().replace(/,/g, '');
+    errorMsg.textContent = '';
+
+    if (!raw) {
+      showError('Please enter a value in milliseconds.');
+      return;
+    }
+
+    const ms = parseFloat(raw);
+
+    if (isNaN(ms) || !isFinite(ms)) {
+      showError('That doesn\'t look like a valid number.');
+      return;
+    }
+
+    if (ms < 0) {
+      showError('Please enter a positive value.');
+      return;
+    }
+
+    const totalMs = Math.floor(Math.abs(ms));
+    const hours   = Math.floor(totalMs / 3_600_000);
+    const minutes = Math.floor((totalMs % 3_600_000) / 60_000);
+    const seconds = Math.floor((totalMs % 60_000) / 1_000);
+    const msLeft  = totalMs % 1_000;
+
+    const formatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    lastResult = formatted;
+
+    // Animate display
+    timeDisplay.innerHTML = `
+      <div class="time-block">
+        <span class="time-number">${pad(hours)}</span>
+        <span class="time-unit">hr</span>
+      </div>
+      <span class="time-sep">:</span>
+      <div class="time-block">
+        <span class="time-number">${pad(minutes)}</span>
+        <span class="time-unit">min</span>
+      </div>
+      <span class="time-sep">:</span>
+      <div class="time-block">
+        <span class="time-number">${pad(seconds)}</span>
+        <span class="time-unit">sec</span>
+      </div>
+    `;
+
+    timeDisplay.classList.remove('pop');
+    void timeDisplay.offsetWidth;
+    timeDisplay.classList.add('pop');
+
+    // Breakdown
+    document.getElementById('v-hr').textContent  = hours;
+    document.getElementById('v-min').textContent = minutes;
+    document.getElementById('v-sec').textContent = seconds;
+    document.getElementById('v-ms').textContent  = msLeft;
+
+    ['b-hr','b-min','b-sec','b-ms'].forEach(id => {
+      document.getElementById(id).classList.add('active');
+    });
+
+    copyBtn.classList.add('visible');
+    copyBtn.textContent = 'COPY RESULT';
+    copyBtn.classList.remove('copied');
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    input.focus();
+  }
+
+  function copyResult() {
+    if (!lastResult) return;
+    navigator.clipboard.writeText(lastResult).then(() => {
+      copyBtn.textContent = '✓ COPIED!';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'COPY RESULT';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
